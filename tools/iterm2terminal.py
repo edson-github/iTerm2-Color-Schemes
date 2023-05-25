@@ -97,7 +97,7 @@ def convert(source, target):
 
     for key, value in iterm.items():
         if key in mappings:
-            terminal.update({mappings.get(key): create_color_entry(value)})
+            terminal[mappings.get(key)] = create_color_entry(value)
 
     with open(target_path, "wb") as output_file:
         plistlib.dump(terminal, output_file)
