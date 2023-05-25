@@ -38,12 +38,7 @@ class Converter(object):
             self.schemes = self.get_all_schemes()
 
     def get_all_schemes(self):
-        schemes = []
-
-        for name in os.listdir(self.iterm_dir):
-            schemes.append(iterm_re.match(name).group(1))
-
-        return schemes
+        return [iterm_re.match(name).group(1) for name in os.listdir(self.iterm_dir)]
 
     def get_all_templates(self, templates_arg):
         templates = {}
@@ -52,7 +47,7 @@ class Converter(object):
             name, ext = os.path.splitext(template)
 
             if templates_arg is None or name in templates_arg:
-                templates.update({name: template})
+                templates[name] = template
 
         return templates
 
@@ -62,7 +57,7 @@ class Converter(object):
         iterm_path = self.iterm_dir + scheme + iterm_ext
 
         if not os.path.isfile(iterm_path):
-            logging.error('Scheme ' + iterm_path + ' doesn\'t exist')
+            logging.error(f'Scheme {iterm_path}' + ' doesn\'t exist')
             sys.exit(1)
 
         with open(iterm_path, 'rb') as f:
@@ -130,9 +125,8 @@ class Converter(object):
             data['scheme_name'] = scheme
             result = t.render(data)
             destination = self.out_dir + template + '/' + scheme + ext
-            f = open(destination, 'w')
-            f.write(result)
-            f.close()
+            with open(destination, 'w') as f:
+                f.write(result)
             if (result.startswith('#!')):
                 os.chmod(destination, 0o755)
             self.bar.update(task_id, advance=1)
@@ -150,5 +144,7 @@ class Converter(object):
                 self.bar.update(task_id, advance=1)
 
             for template in self.templates:
-                task_id_tmp = self.bar.add_task("process", template="Generating " + template, start=False)
+                task_id_tmp = self.bar.add_task(
+                    "process", template=f"Generating {template}", start=False
+                )
                 self.generate_from_template(task_id_tmp, colors, template)
